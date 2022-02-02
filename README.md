@@ -32,25 +32,33 @@ From there, a texture is generated. You can optionally use the heightmap values 
 ### General Settings
 
 **Seed:** The seed used for heightmap generation
+
 **Resolution:** The resolution of the output texture. This is how many pixels wide it will be, the height of the texture will be half of this (ie. a Resolution of 1024 produces a 1024x512px texture)
+
 **Texture Quality:** This is a general quality setting stored as an enum that is used to determine the amount of oompf that goes into making textures. Settings are High, Medium, and Low. Medium is the standard setting, in Low the planet only uses a single sample for the entire texture and does not do anything with biomes, and in High the generator will also generate a normalmap.
 
 ### Noise Settings
 
 **Sea Level:** This is added to the height of the output points, which is clamped to between 0 and 1. This reduces the altitude of all of the points on the map, effectively increasing the sea level and reducing the amount of mountains.
+
 **Roughness:** This spaces the sample points further apart to create a rougher planet.
+
 **Centre:** The centre of the noise. This allows the planet's noise values to be offset if need be.
 
 ### Biome Settings
 
 **Temperature:** A modifier to vary the overall temperature of the planet. This is added to the values in the temperature map, which are clamped to between 0 and 1. Lower values mean a colder planet. Higher values mean a hotter planet.
+
 **Rainfall:** A modifier to vary the overall rainfall on the planet. This is added to the values in the rainfall map, which are clamped to between 0 and 1. Lower values mean a drier, more arid planet. Higher values mean a wetter, more humid planet.
+
 **Variation:** This spaces the sample points for the biome noise out further, which creates wilder and more varied temperature and rainfall maps.
 
 ### Texture Generation
 
 **Sample Textures:** The array of six different sample textures to use to create a basic biome map.
+
 **PlanetTex:** This stores the RGB texture of the planet.
+
 **Normalmap:** This stores the planet's normalmap.
 
 Note that there is an if block that limits this script to only working in client builds and the Editor. This is to save performance in server builds which don't need to generate a full texture for every planet (it's a clientside thing).
