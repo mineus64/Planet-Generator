@@ -14,6 +14,9 @@ public class PlanetGenerator : MonoBehaviour
     public TextureQuality textureQuality;
     [Header("Noise Settings")]
     [Range(0,1)] public float seaLevel = 0.5f;
+    [Range(1,8)] public int layers = 1;
+    [Range(0,1)] public float persistence = 0.5f;
+    public float lacunarity = 2.0f;
     public float roughness = 1;
     public Vector3 centre = Vector3.zero;
     [Header("Biome Settings")]
@@ -21,7 +24,7 @@ public class PlanetGenerator : MonoBehaviour
     [Range(-1,1)] public float rainfall = 0f;
     public float variation = 1;
     [Header("Texture Generation")]
-    public Texture2D[] sampleTextures = new Texture2D[6];
+    public Texture2D[] sampleTextures = new Texture2D[7];
     public Material planetMaterial;
     Noise noise;
     Texture2D planetTex;
@@ -74,10 +77,6 @@ public class PlanetGenerator : MonoBehaviour
                 float rain = Rainfall(samplePoint);
                 float height = Height(samplePoint);
 
-                if (Random.Range(0f,1f) <= 0.01) {
-                    Debug.Log(height);
-                }
-
                 if (height < minHeight) {
                     minHeight = height;
                 }
@@ -87,33 +86,40 @@ public class PlanetGenerator : MonoBehaviour
                 // Use the temperature and rainfall values to select which sample texture to use
                 Texture2D sampleTex;
 
-                if (temp > 0.5f) {
-                    if (rain > 2/3) {
-                        sampleTex = sampleTextures[0];
-                    }
-                    else if (rain > 1/3) {
-                        sampleTex = sampleTextures[1];
-                    }
-                    else {
-                        sampleTex = sampleTextures[2];
-                    }
+                if (height < seaLevel) { 
+                    sampleTex = sampleTextures[0];
                 }
                 else {
-                    if (rain > 2/3) {
-                        sampleTex = sampleTextures[3];
-                    }
-                    else if (rain > 1/3) {
-                        sampleTex = sampleTextures[4];
+                    if (temp > 0.5f) {
+                        if (rain > 2/3) {
+                            sampleTex = sampleTextures[1];
+                        }
+                        else if (rain > 1/3) {
+                            sampleTex = sampleTextures[2];
+                        }
+                        else {
+                            sampleTex = sampleTextures[3];
+                        }
                     }
                     else {
-                        sampleTex = sampleTextures[5];
+                        if (rain > 2/3) {
+                            sampleTex = sampleTextures[4];
+                        }
+                        else if (rain > 1/3) {
+                            sampleTex = sampleTextures[5];
+                        }
+                        else {
+                            sampleTex = sampleTextures[6];
+                        }
                     }
                 }
                 // Get the colour based on the sample and apply it to the texture
                 Color sampleCol = sampleTex.GetPixelBilinear(
-                    (-height + 1),
-                    (((resolution / 2) - (0.5f * (resolution / 2))) / (0.5f * (resolution / 2)))
+                    (((resolution / 2) - (0.5f * (resolution / 2))) / (0.5f * (resolution / 2))),
+                    (-height + 1)
                 );
+                // Add the height value to the texture
+                sampleCol.a = height;
                 //planetTex.SetPixel(x, y, new Color(height * 255, height * 255, height * 255, 1));
                 planetTex.SetPixel(x, y, sampleCol);
             }
@@ -131,7 +137,6 @@ public class PlanetGenerator : MonoBehaviour
             planetMaterial.SetTexture("_BumpMap", normalmap);
         }
 
-        Debug.Log("Min Height: " + minHeight + " Max Height: " + maxHeight);
     }
     #endregion
 
@@ -139,7 +144,21 @@ public class PlanetGenerator : MonoBehaviour
     // Method to generate fine detailmap data for a given point
     public float Height(Vector3 point) 
     {
-        return Mathf.Clamp01((noise.Evaluate(point * roughness + centre) + 1) * 0.5f - seaLevel);
+        float value = 0.0f;
+        float frequency = roughness;
+        float amplitude = 1;
+
+        for (int i = 0; i < layers; i++)
+        {
+            value += ((noise.Evaluate(point * frequency + centre) + 1) * 0.5f * amplitude);
+
+            frequency *= lacunarity;
+            amplitude *= persistence;
+        }
+
+        Mathf.Clamp01(value);
+
+        return value;
     }
     // Method to generate coarse temperature map data for a given point
     public float Temperature(Vector3 point) 
@@ -161,14 +180,14 @@ public class PlanetGenerator : MonoBehaviour
             {
                 //using Sobel operator
                 float tl, t, tr, l, right, bl, bot, br;
-                tl = Intensity(texture.GetPixel(x - 1, y - 1));
-                t = Intensity(texture.GetPixel(x - 1, y));
-                tr = Intensity(texture.GetPixel(x - 1, y + 1));
-                right = Intensity(texture.GetPixel(x, y + 1));
-                br = Intensity(texture.GetPixel(x + 1, y + 1));
-                bot = Intensity(texture.GetPixel(x + 1, y));
-                bl = Intensity(texture.GetPixel(x + 1, y - 1));
-                l = Intensity(texture.GetPixel(x, y - 1));
+                tl = texture.GetPixel(x - 1, y - 1).a;
+                t = texture.GetPixel(x - 1, y).a;
+                tr = texture.GetPixel(x - 1, y + 1).a;
+                right = texture.GetPixel(x, y + 1).a;
+                br = texture.GetPixel(x + 1, y + 1).a;
+                bot = texture.GetPixel(x + 1, y).a;
+                bl = texture.GetPixel(x + 1, y - 1).a;
+                l = texture.GetPixel(x, y - 1).a;
  
                 //Sobel filter
                 float dX = (tr + 2.0f * right + br) - (tl + 2.0f * l + bl);

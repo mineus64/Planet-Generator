@@ -2,6 +2,8 @@
 
 A Unity package for generating planets using Perlin Noise given a set of sample textures.
 
+This project is currently unfinished. I made it as part of a different project but decided to drop it for expedience's sake. I might revisit this down the line as it's a good baseline for a lot of my ideas.
+
 ## Installation
 
 Just import these items into your project, no muss no fuss.
@@ -18,13 +20,16 @@ This script will sample from Perlin noise to create a heightmap, and will then p
 
 ## How This Works
 
-This tool uses Perlin noise to sample a set of values for each pixel on the map: Height, Temperature, and Rainfall. The tool takes in an array of sample textures which are used to determine the colour of each pixel in the final texture. Each sample texture represents a single biome, and is coloured based on latitude (increasing from left to right) and height (increasing from top to bottom). Temperature values are broken into two values: High and Low, while Humidity values are broken into three: High, Medium, and Low. These values are used to select which texture is sampled, like so:
-0: High Temperature, high Humidity: Tropics
-1: High Temperature, medium Humidity: Savannah
-2: High Temperature, low Humidity: Desert
-3: Low Temperature, high Humidity: Swamp
-4: Low Temperature, medium Humidity: Temperate
-5: Low Temperature, low Humidity: Tundra
+This tool uses Perlin noise to sample a set of values for each pixel on the map: Height, Temperature, and Rainfall. The Height value is taken by sampling a number of "layers" of noise, with each subsequent layer increasing in roughness but decreasing in strength, to provide finer detail. Temperature and Rainfall both just use a single layer each to create a broad spectrum across the planet.
+
+The tool takes in an array of sample textures which are used to determine the colour of each pixel in the final texture. Each sample texture represents a single biome, and is coloured based on latitude (increasing from left to right) and height (increasing from top to bottom). Temperature values are broken into two values: High and Low, while Humidity values are broken into three: High, Medium, and Low. These values are used to select which texture is sampled, like so:
+1: High Temperature, high Humidity: Tropics
+2: High Temperature, medium Humidity: Savannah
+3: High Temperature, low Humidity: Desert
+4: Low Temperature, high Humidity: Swamp
+5: Low Temperature, medium Humidity: Temperate
+6: Low Temperature, low Humidity: Tundra
+Texture 0 is the ocean texture, sampled from if the height value at the given pixel is equal to or less than the sea level.
 From there, a texture is generated. You can optionally use the heightmap values to deform your sphere if you'd like. This tool can also generate a normalmap to increase the perceived detail of your planet.
 
 ## Settings
@@ -40,6 +45,12 @@ From there, a texture is generated. You can optionally use the heightmap values 
 ### Noise Settings
 
 **Sea Level:** This is added to the height of the output points, which is clamped to between 0 and 1. This reduces the altitude of all of the points on the map, effectively increasing the sea level and reducing the amount of mountains.
+
+**Layers:** The number of layers to use when generating the noisemap. More layers means a higher-quality world but also means increased texture generation time.
+
+**Persistence:** How quickly subsequent layers decrease in strength.
+
+**Lacunarity:** How quickly subsequent layers increase in roughness.
 
 **Roughness:** This spaces the sample points further apart to create a rougher planet.
 
